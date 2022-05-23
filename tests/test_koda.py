@@ -49,6 +49,5 @@ def test_serialize():
 
 
 def test_compress():
-    compress_file(Path("~/KODA/zpi.md"))
-    assert Path("~/KODA/zpi.md.artpack").expanduser().open('rb').read()
-    decompress_file(Path("~/KODA/zpi.md.artpack"))
+    compress_file(Path("~/KODA/x.jpg"))
+    decompress_file(Path("~/KODA/x.jpg.artpack"))

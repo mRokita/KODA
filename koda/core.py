@@ -37,6 +37,7 @@ class DataModel:
         self._cumulated_count = get_cumulated_count(self.count)
         self.total_count = sum(self.count.values())
         self.m_value = math.ceil(math.log2(self.total_count * 4))
+        self.m_value += (8 - self.m_value % 8)
 
     def get_cum_count(self, byte: int, include_self=True):
         if not include_self:
