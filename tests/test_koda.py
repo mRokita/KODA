@@ -99,8 +99,7 @@ def test_serialize():
         b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
         b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
         b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-        b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\n\xc5\x13@\x00"
-    )
+        b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\n\xc5\x13@\x00")
     message, message_length, model = _unpack_message(
         _pack_message(
             bytearray([0b11000101, 0b00010011, 0b01000000, 0b00000000]), 1024, m
@@ -112,5 +111,8 @@ def test_serialize():
 
 
 def test_compress():
-    compress_file(Path("~/KODA/tests/test_koda.py"))
-    decompress_file(Path("~/KODA/tests/test_koda.py.artpack"))
+    res_dir = Path(__file__).parent / "res"
+    for p in res_dir.iterdir():
+        if p.suffix == '.pgm':
+            compress_file(Path(p))
+            decompress_file(Path(p.with_suffix(".pgm.artpack")))

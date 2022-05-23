@@ -239,8 +239,8 @@ def decompress_file(path: Path):
     path = path.expanduser()
     assert path.suffix.endswith(".artpack")
     out_path = path.with_suffix(path.suffix.rsplit(".artpack", maxsplit=1)[0])
-    while out_path.exists():
-        out_path = out_path.with_stem(out_path.stem + "(1)")
+    if out_path.exists():
+        out_path = out_path.with_stem(out_path.stem + "(artunpacked)")
 
     with path.expanduser().open("rb") as fo:
         encoded_msg, message_len, model = _unpack_message(iter_bytes(fo))

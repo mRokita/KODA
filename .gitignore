@@ -4,3 +4,6 @@
 venv/
 .pytest_cache/
 .coverage
+*.artpack
+*(artunpacked)*
+*.zip
