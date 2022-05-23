@@ -31,13 +31,16 @@ def get_byte_count(data: Iterable[int]):
 
 
 class DataModel:
+    """
+    Data model, describes, how often symbols (bytes 0-255),
+    occur in encoded files.
+    """
     def __init__(self, byte_count: Mapping[int, int] = None):
         count = dict(byte_count)
         self.count = dict((i, count.get(i, 0)) for i in range(256))
         self._cumulated_count = get_cumulated_count(self.count)
         self.total_count = sum(self.count.values())
         self.m_value = math.ceil(math.log2(self.total_count * 4))
-        self.m_value += (8 - self.m_value % 8)
 
     def get_cum_count(self, byte: int, include_self=True):
         if not include_self:
@@ -109,7 +112,6 @@ class BitStream:
     def close(self) -> Optional[int]:
         if self.bits % 8 != 0:
             close_byte = self.current_byte * 2 ** (8 - (self.bits % 8))
-            print(close_byte, self.current_byte, self.bits % 8)
             yield close_byte
 
 
@@ -226,7 +228,6 @@ def decompress_file(path: Path):
     with path.expanduser().open('rb') as fo:
         encoded_msg, message_len, model = _unpack_message(iter_bytes(fo))
         data_iter = _decode(encoded_msg, message_length=message_len, model=model)
-        print(out_path)
         with out_path.expanduser().open('wb') as fo_out:
             while chunk := bytearray(islice(data_iter, 0, 64)):
                 fo_out.write(chunk)
@@ -301,4 +302,4 @@ def _decode(data: bytearray, message_length: int, model: DataModel):
                 current_bit = next(bit_iter)
             except StopIteration:
                 print(f'Warning: file ended unexpectedly')
-                continue
+                break

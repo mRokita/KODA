@@ -20,6 +20,22 @@ def test_encode():
     )
 
 
+def test_failing_case_a():
+    m = DataModel({ord("1"): 43, ord("2"): 1, ord("3"): 9})
+    print(m.m_value)
+    assert bytearray(_decode(_encode(
+        b"1321321", model=m
+    ), model=m, message_length=7)) == b"1321321"
+
+
+def test_failing_case_b():
+    m = DataModel({ord("1"): 43, ord("2"): 1, ord("3"): 9})
+    print(m.m_value)
+    assert bytearray(_decode(_encode(
+        b"1321", model=m
+    ), model=m, message_length=7)) == b"1321"
+
+
 def test_serialize():
     m = DataModel({ord("1"): 40, ord("2"): 1, ord("3"): 9})
     s = m.serialize()
@@ -49,5 +65,5 @@ def test_serialize():
 
 
 def test_compress():
-    compress_file(Path("~/KODA/x.jpg"))
-    decompress_file(Path("~/KODA/x.jpg.artpack"))
+    compress_file(Path("~/KODA/tests/test_koda.py"))
+    decompress_file(Path("~/KODA/tests/test_koda.py.artpack"))
