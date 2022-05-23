@@ -20,7 +20,7 @@ def get_cumulated_count(count: Dict[int, int]):
 
 def iter_bytes(file_object) -> Iterable[int]:
     while (symbol := file_object.read(1)) != b"":
-        yield int.from_bytes(symbol, 'big')
+        yield int.from_bytes(symbol, "big")
 
 
 def get_byte_count(data: Iterable[int]):
@@ -35,6 +35,7 @@ class DataModel:
     Data model, describes, how often symbols (bytes 0-255),
     occur in encoded files.
     """
+
     def __init__(self, byte_count: Mapping[int, int] = None):
         count = dict(byte_count)
         self.count = dict((i, count.get(i, 0)) for i in range(256))
@@ -185,7 +186,9 @@ def iter_bits(data: Iterable[int]) -> Iterable[Union[Literal[0], Literal[1]]]:
             yield (byte >> i) & 1
 
 
-def _pack_message(encoded_data: bytearray, message_length, model: DataModel) -> Iterable[int]:
+def _pack_message(
+    encoded_data: bytearray, message_length, model: DataModel
+) -> Iterable[int]:
     banner = b"ARTPACK\n"
     message_length_len = math.ceil(math.log2(message_length) / 8)
     message_length_serialized = message_length_len.to_bytes(
@@ -200,7 +203,7 @@ def _unpack_message(packed_message: bytearray) -> Tuple[Iterable[int], int, Data
     msg_iter = iter(packed_message)
     assert bytes(islice(msg_iter, 0, 8)) == b"ARTPACK\n"
     message_length_len = next(msg_iter)
-    message_length = int.from_bytes(islice(msg_iter, 0, message_length_len), 'big')
+    message_length = int.from_bytes(islice(msg_iter, 0, message_length_len), "big")
     model = DataModel.from_serialized(msg_iter)
     m = bytes([next(msg_iter)])
     assert m == b"\n", m
@@ -208,27 +211,35 @@ def _unpack_message(packed_message: bytearray) -> Tuple[Iterable[int], int, Data
 
 
 def compress_file(path: Path):
-    with path.expanduser().open('rb') as fo:
+    with path.expanduser().open("rb") as fo:
         model = DataModel(get_byte_count(iter_bytes(fo)))
     message_length = sum(model.count.values())
-    with path.expanduser().open('rb') as fo:
-        pack_iter = iter(_pack_message(bytes(_encode(iter_bytes(fo), model=model)), message_length=message_length, model=model))
-        with path.expanduser().with_suffix(path.suffix + '.artpack').open('wb') as fo_out:
+    with path.expanduser().open("rb") as fo:
+        pack_iter = iter(
+            _pack_message(
+                bytes(_encode(iter_bytes(fo), model=model)),
+                message_length=message_length,
+                model=model,
+            )
+        )
+        with path.expanduser().with_suffix(path.suffix + ".artpack").open(
+            "wb"
+        ) as fo_out:
             while chunk := bytearray(islice(pack_iter, 0, 64)):
                 fo_out.write(chunk)
 
 
 def decompress_file(path: Path):
     path = path.expanduser()
-    assert path.suffix.endswith('.artpack')
-    out_path = path.with_suffix(path.suffix.rsplit('.artpack', maxsplit=1)[0])
+    assert path.suffix.endswith(".artpack")
+    out_path = path.with_suffix(path.suffix.rsplit(".artpack", maxsplit=1)[0])
     while out_path.exists():
-        out_path = out_path.with_stem(out_path.stem + '(1)')
+        out_path = out_path.with_stem(out_path.stem + "(1)")
 
-    with path.expanduser().open('rb') as fo:
+    with path.expanduser().open("rb") as fo:
         encoded_msg, message_len, model = _unpack_message(iter_bytes(fo))
         data_iter = _decode(encoded_msg, message_length=message_len, model=model)
-        with out_path.expanduser().open('wb') as fo_out:
+        with out_path.expanduser().open("wb") as fo_out:
             while chunk := bytearray(islice(data_iter, 0, 64)):
                 fo_out.write(chunk)
 
@@ -301,5 +312,5 @@ def _decode(data: bytearray, message_length: int, model: DataModel):
             try:
                 current_bit = next(bit_iter)
             except StopIteration:
-                print(f'Warning: file ended unexpectedly')
+                print(f"Warning: file ended unexpectedly")
                 break
