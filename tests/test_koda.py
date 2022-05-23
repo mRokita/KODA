@@ -1,6 +1,8 @@
+from itertools import chain
 from pathlib import Path
 
 from koda.core import (
+    BitStream,
     DataModel,
     _decode,
     _encode,
@@ -8,6 +10,7 @@ from koda.core import (
     _unpack_message,
     compress_file,
     decompress_file,
+    iter_bits,
 )
 
 
@@ -46,6 +49,30 @@ def test_failing_case_b():
         bytearray(_decode(_encode(b"133", model=m), model=m, message_length=3))
         == b"133"
     )
+
+
+def test_bit_stream():
+    s = BitStream()
+    assert tuple(
+        iter_bits(
+            bytearray(
+                chain(
+                    s.add(0),
+                    s.add(1),
+                    s.add(0),
+                    s.add(0),
+                    s.add(1),
+                    s.add(0),
+                    s.add(0),
+                    s.add(1),
+                    s.add(0),
+                    s.add(1),
+                    s.close(),
+                )
+            ),
+            10,
+        )
+    ) == (0, 1, 0, 0, 1, 0, 0, 1, 0, 1)
 
 
 def test_serialize():

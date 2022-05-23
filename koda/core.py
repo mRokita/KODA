@@ -113,7 +113,6 @@ class BitStream:
     def close(self) -> Optional[int]:
         if self.bits % 8 != 0:
             close_byte = self.current_byte * 2 ** (8 - (self.bits % 8))
-            print(self.bits % 8)
             yield close_byte
 
 
@@ -181,10 +180,16 @@ def _encode(data: Iterable[int], *, model: DataModel = None) -> bytearray:
     yield from stream.close()
 
 
-def iter_bits(data: Iterable[int]) -> Iterable[Union[Literal[0], Literal[1]]]:
+def iter_bits(
+    data: Iterable[int], limit: int = None
+) -> Iterable[Union[Literal[0], Literal[1]]]:
+    loaded = 0
     for byte in data:
         for i in reversed(range(8)):
             yield (byte >> i) & 1
+            loaded += 1
+            if limit and loaded >= limit:
+                return
 
 
 def _pack_message(
