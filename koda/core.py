@@ -113,6 +113,7 @@ class BitStream:
     def close(self) -> Optional[int]:
         if self.bits % 8 != 0:
             close_byte = self.current_byte * 2 ** (8 - (self.bits % 8))
+            print(self.bits % 8)
             yield close_byte
 
 
@@ -253,7 +254,6 @@ def _decode(data: bytearray, message_length: int, model: DataModel):
     u = pow(2, m_value) - 1
     bit_iter = iter_bits(data)
     t = int("".join(str(i) for i in islice(bit_iter, 0, m_value)), 2)
-    current_bit = next(bit_iter)
     bytes_loaded = 0
 
     while True:
@@ -288,6 +288,11 @@ def _decode(data: bytearray, message_length: int, model: DataModel):
 
         msb_0_condition, msb_1_condition, e3_condition = get_conditions(l, u, m_value)
         while msb_0_condition or msb_1_condition or e3_condition:
+            try:
+                current_bit = next(bit_iter)
+            except StopIteration:
+                print(f"Warning: file ended unexpectedly")
+                break
             if (t & (1 << m_value - 1)) == 0:
                 t = t << 1
             elif (t & (1 << m_value - 1)) > 0:
@@ -309,8 +314,3 @@ def _decode(data: bytearray, message_length: int, model: DataModel):
             msb_0_condition, msb_1_condition, e3_condition = get_conditions(
                 l, u, m_value
             )
-            try:
-                current_bit = next(bit_iter)
-            except StopIteration:
-                print(f"Warning: file ended unexpectedly")
-                break
