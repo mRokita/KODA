@@ -166,17 +166,12 @@ def _encode(data: Iterable[int], *, model: DataModel = None) -> bytearray:
 
     l_binary = get_binary_representation(l)
     yield from stream.add(int(l_binary[0]))
-    print(l_binary)
     while scale3 > 0:
-        print(1)
         yield from stream.add(1)
         scale3 -= 1
     for l in range(m_value - len(l_binary)):
-        print(0)
         yield from stream.add(0)
     for bit in l_binary[1:]:
-        print(bit
-              )
         yield from stream.add(bit)
     yield from stream.close()
 
@@ -226,6 +221,7 @@ def decompress_file(path: Path):
     out_path = path.with_suffix(path.suffix.rsplit('.artpack', maxsplit=1)[0])
     while out_path.exists():
         out_path = out_path.with_stem(out_path.stem + '(1)')
+
     with path.expanduser().open('rb') as fo:
         encoded_msg, message_len, model = _unpack_message(iter_bytes(fo))
         data_iter = _decode(encoded_msg, message_length=message_len, model=model)
@@ -285,10 +281,6 @@ def _decode(data: bytearray, message_length: int, model: DataModel):
                 t = 1 ^ ((most_significant_bit ^ t) << 1)
             if (current_bit == 1 and t & 1 == 0) or (current_bit == 0 and t & 1 > 0):
                 t = 1 ^ t
-            try:
-                current_bit = next(bit_iter)
-            except StopIteration:
-                print(f'Warning: file ended unexpectedly')
             if msb_0_condition:
                 l = l << 1
                 u = 1 ^ (u << 1)
@@ -304,3 +296,8 @@ def _decode(data: bytearray, message_length: int, model: DataModel):
             msb_0_condition, msb_1_condition, e3_condition = get_conditions(
                 l, u, m_value
             )
+            try:
+                current_bit = next(bit_iter)
+            except StopIteration:
+                print(f'Warning: file ended unexpectedly')
+                continue
