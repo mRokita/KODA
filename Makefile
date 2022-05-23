@@ -15,3 +15,7 @@ lint:
 .PHONY: test
 test:
 	poetry run pytest --cov=./koda -vvv
+
+.PHONY: docs_pdf
+docs_pdf:
+	 pandoc documentation.md -o documentation.pdf --template template.tex
