@@ -39,11 +39,12 @@ def test_failing_case_a():
 
 
 def test_failing_case_b():
-    m = DataModel({ord("1"): 43, ord("2"): 1, ord("3"): 9})
-    print(m.m_value)
+    m = DataModel({ord("1"): 44, ord("2"): 1, ord("3"): 531})
+
+    print(bytes(_encode(b"133", model=m)))
     assert (
-        bytearray(_decode(_encode(b"1323", model=m), model=m, message_length=4))
-        == b"1321"
+        bytearray(_decode(_encode(b"133", model=m), model=m, message_length=3))
+        == b"133"
     )
 
 
