@@ -29,6 +29,17 @@ def get_byte_count(data: Iterable[int]):
         count[symbol] += 1
     return count
 
+def get_entropy(cumul_count: Dict[int, int]):
+    #Entropy for each existing value in input
+    #H = -sum(probability_of_pixels_at_intensity_x)*log2(probability_of_pixels_at_intensity_x)
+    #probability_of_pixels_at_intensity_x = pixels_at_intensity_x/sum_all_pixels
+
+    total_count = cumul_count.values()
+    entropy: Dict[int, float] = {-1: 0}
+    for intensity, intensity_occurences in cumul_count.items():
+        probability_of_intensity = cumul_count[intensity]/total_count
+        entropy[intensity] = -probability_of_intensity*math.log2(probability_of_intensity)
+    return entropy
 
 class DataModel:
     """
@@ -42,6 +53,7 @@ class DataModel:
         self._cumulated_count = get_cumulated_count(self.count)
         self.total_count = sum(self.count.values())
         self.m_value = math.ceil(math.log2(self.total_count * 4))
+        self.entropy = get_entropy(self._cumulated_count)
 
     def get_cum_count(self, byte: int, include_self=True):
         if not include_self:
