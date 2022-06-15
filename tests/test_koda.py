@@ -113,6 +113,6 @@ def test_serialize():
 def test_compress():
     res_dir = Path(__file__).parent / "res"
     for p in res_dir.iterdir():
-        if p.suffix == '.pgm':
+        if p.suffix == '.pgm' and not 'artunpacked' in p.name:
             compress_file(Path(p))
             decompress_file(Path(p.with_suffix(".pgm.artpack")))

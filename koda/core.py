@@ -30,16 +30,13 @@ def get_byte_count(data: Iterable[int]):
     return count
 
 def get_entropy(cumul_count: Dict[int, int]):
-    #Entropy for each existing value in input
-    #H = -sum(probability_of_pixels_at_intensity_x)*log2(probability_of_pixels_at_intensity_x)
-    #probability_of_pixels_at_intensity_x = pixels_at_intensity_x/sum_all_pixels
-
-    total_count = cumul_count.values()
-    entropy: Dict[int, float] = {-1: 0}
-    for intensity, intensity_occurences in cumul_count.items():
-        probability_of_intensity = cumul_count[intensity]/total_count
-        entropy[intensity] = -probability_of_intensity*math.log2(probability_of_intensity)
-    return entropy
+    total_count = sum(cumul_count.values())
+    total_entropy = 0
+    for occurrences in cumul_count.values():
+        p = occurrences / total_count
+        if p > 0:
+            total_entropy -= p * math.log2(p)
+    return total_entropy
 
 class DataModel:
     """
@@ -247,12 +244,14 @@ def compress_file(path: Path):
                 fo_out.write(chunk)
 
 
-def decompress_file(path: Path):
+def decompress_file(path: Path, out_path: Path = None):
     path = path.expanduser()
     assert path.suffix.endswith(".artpack")
-    out_path = path.with_suffix(path.suffix.rsplit(".artpack", maxsplit=1)[0])
-    if out_path.exists():
-        out_path = out_path.with_stem(out_path.stem + "(artunpacked)")
+
+    if not out_path:
+        out_path = path.with_suffix(path.suffix.rsplit(".artpack", maxsplit=1)[0])
+        if out_path.exists():
+            out_path = out_path.with_stem(out_path.stem + "(artunpacked)")
 
     with path.expanduser().open("rb") as fo:
         encoded_msg, message_len, model = _unpack_message(iter_bytes(fo))
@@ -308,7 +307,6 @@ def _decode(data: bytearray, message_length: int, model: DataModel):
             try:
                 current_bit = next(bit_iter)
             except StopIteration:
-                print(f"Warning: file ended unexpectedly")
                 break
             if (t & (1 << m_value - 1)) == 0:
                 t = t << 1
