@@ -1,6 +1,7 @@
 import math
+import os
 from collections import defaultdict
-from itertools import islice
+from itertools import islice, chain
 from pathlib import Path
 from typing import Dict, Iterable, Mapping, Literal, Union, Tuple, Optional
 
@@ -29,6 +30,7 @@ def get_byte_count(data: Iterable[int]):
         count[symbol] += 1
     return count
 
+
 def get_entropy(cumul_count: Dict[int, int]):
     total_count = sum(cumul_count.values())
     total_entropy = 0
@@ -37,6 +39,7 @@ def get_entropy(cumul_count: Dict[int, int]):
         if p > 0:
             total_entropy -= p * math.log2(p)
     return total_entropy
+
 
 class DataModel:
     """
@@ -125,9 +128,7 @@ class BitStream:
             yield close_byte
 
 
-def _encode(data: Iterable[int], *, model: DataModel = None) -> bytearray:
-    if not model:
-        model = DataModel(get_byte_count(data))
+def _encode(data: Iterable[int], *, model: DataModel) -> bytearray:
     m_value = model.m_value
     most_significant_bit = pow(2, m_value - 1)
     second_most_significant_bit = pow(2, m_value - 2)
@@ -227,12 +228,12 @@ def _unpack_message(packed_message: bytearray) -> Tuple[Iterable[int], int, Data
 
 def compress_file(path: Path):
     with path.expanduser().open("rb") as fo:
-        model = DataModel(get_byte_count(iter_bytes(fo)))
+        model = DataModel(get_byte_count(chain(iter_bytes(fo), b"\x00")))
     message_length = sum(model.count.values())
     with path.expanduser().open("rb") as fo:
         pack_iter = iter(
             _pack_message(
-                bytes(_encode(iter_bytes(fo), model=model)),
+                bytes(_encode(chain(iter_bytes(fo), b"\x00"), model=model)),
                 message_length=message_length,
                 model=model,
             )
@@ -259,6 +260,7 @@ def decompress_file(path: Path, out_path: Path = None):
         with out_path.expanduser().open("wb") as fo_out:
             while chunk := bytearray(islice(data_iter, 0, 64)):
                 fo_out.write(chunk)
+            fo_out.truncate(message_len - 1)
 
 
 def _decode(data: bytearray, message_length: int, model: DataModel):
