@@ -4,6 +4,7 @@ from collections import defaultdict
 from itertools import islice, chain
 from pathlib import Path
 from typing import Dict, Iterable, Mapping, Literal, Union, Tuple, Optional
+from rich.progress import track
 
 
 def get_binary_representation(value):
@@ -226,23 +227,28 @@ def _unpack_message(packed_message: bytearray) -> Tuple[Iterable[int], int, Data
     return msg_iter, message_length, model
 
 
-def compress_file(path: Path):
+def compress_file(
+    path: Path, out_path: Path, iter_wrapper=lambda iter_: iter_
+) -> Tuple[Path, DataModel]:
     with path.expanduser().open("rb") as fo:
         model = DataModel(get_byte_count(chain(iter_bytes(fo), b"\x00")))
     message_length = sum(model.count.values())
+    if not out_path:
+        out_path = path.expanduser().with_suffix(path.suffix + ".artpack")
     with path.expanduser().open("rb") as fo:
         pack_iter = iter(
             _pack_message(
-                bytes(_encode(chain(iter_bytes(fo), b"\x00"), model=model)),
+                bytes(
+                    _encode(iter_wrapper(chain(iter_bytes(fo), b"\x00")), model=model)
+                ),
                 message_length=message_length,
                 model=model,
             )
         )
-        with path.expanduser().with_suffix(path.suffix + ".artpack").open(
-            "wb"
-        ) as fo_out:
+        with out_path.open("wb") as fo_out:
             while chunk := bytearray(islice(pack_iter, 0, 64)):
                 fo_out.write(chunk)
+    return out_path, model
 
 
 def decompress_file(path: Path, out_path: Path = None):

@@ -4,6 +4,9 @@ version = "0.1.0"
 description = ""
 authors = ["Michał Rokita <mrokita@mrokita.pl>"]
 
+[tool.poetry.scripts]
+koda = "koda.__main__:cli"
+
 [tool.poetry.dependencies]
 python = "^3.9"
 typer = "^0.4.1"
