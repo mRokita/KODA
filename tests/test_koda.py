@@ -1,7 +1,7 @@
 from itertools import chain
 from pathlib import Path
 
-from koda.core import (
+from koda_ac.core import (
     BitStream,
     DataModel,
     _decode,

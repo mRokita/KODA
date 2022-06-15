@@ -61,7 +61,7 @@ class DataModel:
             byte -= 1
         return self._cumulated_count[byte]
 
-    def serialize(self) -> bytearray:
+    def serialize(self) -> bytes:
         max_val = max(self.count.values())
         length = math.ceil(math.log2(max_val) / 8)
         return b"".join(
@@ -204,7 +204,7 @@ def iter_bits(
 
 
 def _pack_message(
-    encoded_data: bytearray, message_length, model: DataModel
+    encoded_data: Iterable[int], message_length, model: DataModel
 ) -> Iterable[int]:
     banner = b"ARTPACK\n"
     message_length_len = math.ceil(math.log2(message_length) / 8)
@@ -216,7 +216,7 @@ def _pack_message(
     yield from encoded_data
 
 
-def _unpack_message(packed_message: bytearray) -> Tuple[Iterable[int], int, DataModel]:
+def _unpack_message(packed_message: Iterable[int]) -> Tuple[Iterable[int], int, DataModel]:
     msg_iter = iter(packed_message)
     assert bytes(islice(msg_iter, 0, 8)) == b"ARTPACK\n"
     message_length_len = next(msg_iter)
@@ -251,7 +251,9 @@ def compress_file(
     return out_path, model
 
 
-def decompress_file(path: Path, out_path: Path = None):
+def decompress_file(
+    path: Path, out_path: Path = None, iter_wrapper=lambda iter_, total: iter_
+):
     path = path.expanduser()
     assert path.suffix.endswith(".artpack")
 
@@ -262,14 +264,17 @@ def decompress_file(path: Path, out_path: Path = None):
 
     with path.expanduser().open("rb") as fo:
         encoded_msg, message_len, model = _unpack_message(iter_bytes(fo))
-        data_iter = _decode(encoded_msg, message_length=message_len, model=model)
+        data_iter = iter_wrapper(
+            _decode(encoded_msg, message_length=message_len, model=model),
+            total=message_len,
+        )
         with out_path.expanduser().open("wb") as fo_out:
             while chunk := bytearray(islice(data_iter, 0, 64)):
                 fo_out.write(chunk)
             fo_out.truncate(message_len - 1)
 
 
-def _decode(data: bytearray, message_length: int, model: DataModel):
+def _decode(data: Iterable[int], message_length: int, model: DataModel):
     m_value = model.m_value
     most_significant_bit = pow(2, m_value - 1)
     second_most_significant_bit = pow(2, m_value - 2)

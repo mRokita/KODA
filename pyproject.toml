@@ -1,16 +1,20 @@
 [tool.poetry]
-name = "koda"
-version = "0.1.0"
+name = "koda-ac"
+version = "0.1.2"
 description = ""
+readme = "README.md"
 authors = ["Michał Rokita <mrokita@mrokita.pl>"]
+repository = "https://github.com/mRokita/KODA"
+
 
 [tool.poetry.scripts]
-koda = "koda.__main__:cli"
+koda = "koda_ac.__main__:cli"
 
 [tool.poetry.dependencies]
 python = "^3.9"
 typer = "^0.4.1"
 rich = "^12.4.4"
+matplotlib = "^3.5.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.2"
